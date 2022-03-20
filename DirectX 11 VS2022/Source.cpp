@@ -5,6 +5,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_ LPWSTR	lpCmdLine,
 	_In_ int nCmdShow)
 {
+
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (FAILED(hr))
+
+	{
+		ErrorLogger::Log(hr, L"COM初始化失敗\nFailed to call CoInitialize.");
+		return -1;
+	}
+
 	Engine Engine;
 	if (Engine.Initialize(hInstance, L"標題", L"我的窗口類別", 800, 600))
 	{
