@@ -2,6 +2,9 @@
 #include "AdapterReader.h"
 #include "Shaders.h"
 #include "Vertex.h"
+#include <SpriteBatch.h>
+#include <SpriteFont.h>
+#include <WICTextureLoader.h>
 
 class Graphics
 {
@@ -25,12 +28,20 @@ private:
 
 	//圖像
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer2;
 
 	//深度
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 
+	//光柵器
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState;
+
+	//字串顯示輸出
+	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
+	std::unique_ptr<DirectX::SpriteFont> spriteFont;
+
+	//紋理
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;//採樣器
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> myTexture;//儲存紋理
 };

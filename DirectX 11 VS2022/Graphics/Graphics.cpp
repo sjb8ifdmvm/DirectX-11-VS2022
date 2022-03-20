@@ -1,4 +1,4 @@
-#include "Graphics.h"
+ï»¿#include "Graphics.h"
 
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
@@ -24,20 +24,24 @@ void Graphics::RenderFrame()
 	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	this->deviceContext->RSSetState(this->resterizerState.Get());
 	this->deviceContext->OMSetDepthStencilState(this->depthStencilState.Get(), 0);
+	this->deviceContext->PSSetSamplers(0, 1, this->samplerState.GetAddressOf());
 	this->deviceContext->VSSetShader(this->vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
 	
-	UINT stride = sizeof(Vertex);//½w½Ä°Ï¤j¤p
-	UINT offset = 0;//°¾²¾­È
-		//ºñ¦â¤T¨¤§Î
-	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexBuffer2.GetAddressOf(), &stride, &offset);
-	this->deviceContext->Draw(3, 0);
-		//¬õ¦â¤T¨¤§Î
+
+
+	UINT stride = sizeof(Vertex);//ç·©è¡å€å¤§å°
+	UINT offset = 0;//åç§»å€¼
+
+	//æ­£æ–¹å½¢
+	this->deviceContext->PSSetShaderResources(0, 1, this->myTexture.GetAddressOf());
 	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexBuffer.GetAddressOf(), &stride, &offset);
-	this->deviceContext->Draw(3, 0);
+	this->deviceContext->Draw(6, 0);
 
-
-
+	//å­—ä¸²è¼¸å‡º
+	spriteBatch->Begin();
+	spriteFont->DrawString(spriteBatch.get(), L"HELLO World\nä½ å¥½ï¼Œä¸–ç•Œ", DirectX::XMFLOAT2(0, 0), DirectX::Colors::White, 0.0f, DirectX::XMFLOAT2(0.0f, 0.0f), DirectX::XMFLOAT2(1.0f, 1.0f));
+	spriteBatch->End();
 
 
 	this->swapchain->Present(1, NULL);// 1=V-SYNC ON, 0=V-SYNC OFF
@@ -49,7 +53,7 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 
 	if (adapters.size() < 1)
 	{
-		ErrorLogger::Log(L"§ä¤£¨ìIDXGI¾A°t¾¹\nNo IDXGI Adapters found");
+		ErrorLogger::Log(L"æ‰¾ä¸åˆ°IDXGIé©é…å™¨\nNo IDXGI Adapters found");
 		return false;
 	}
 
@@ -58,11 +62,11 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 
 	scd.BufferDesc.Width = width;
 	scd.BufferDesc.Height = height;
-	scd.BufferDesc.RefreshRate.Numerator = 60;//¨ê·s²v¤À¤l
-	scd.BufferDesc.RefreshRate.Denominator = 1;//¨ê·s²v¤À¥À
-	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//Åª¨ú®æ¦¡
-	scd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;//½u±ø±½´y¶¶§Ç
-	scd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;//«ü©wÁY©ñ¥H²Å¦X¸ÑªR«×Åã¥Ü
+	scd.BufferDesc.RefreshRate.Numerator = 60;//åˆ·æ–°ç‡åˆ†å­
+	scd.BufferDesc.RefreshRate.Denominator = 1;//åˆ·æ–°ç‡åˆ†æ¯
+	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//è®€å–æ ¼å¼
+	scd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;//ç·šæ¢æƒæé †åº
+	scd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;//æŒ‡å®šç¸®æ”¾ä»¥ç¬¦åˆè§£æåº¦é¡¯ç¤º
 	scd.SampleDesc.Count = 1;
 	scd.SampleDesc.Quality = 0;
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -81,19 +85,19 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 									adapters[0].pAdapter,//IDXGI Adapter
 									D3D_DRIVER_TYPE_UNKNOWN,
 									NULL,//FOR SOFTWARE DRIVER TYPE
-									NULL,//³Ğ«Ø®ÉªºÃB¥~Äİ©Ê
-									FeatureLevel	,//¥\¯àµ¥¯Å°}¦C
-									_countof(FeatureLevel),//¤ä´©ªº¥\¯àµ¥¯Å¤ºªº¤¸¯À¼Æ
-									D3D11_SDK_VERSION,//SDKª©¥»
-									&scd, //SwapChain´y­z
-									this->swapchain.GetAddressOf(),//SwapChain«ü°w
-									this->device.GetAddressOf(),	//Device«ü°w
-									NULL,//¤ä´©ªº¥\¯àµ¥¯Å
-									this->deviceContext.GetAddressOf()//Device´V«ü°w
+									NULL,//å‰µå»ºæ™‚çš„é¡å¤–å±¬æ€§
+									FeatureLevel	,//åŠŸèƒ½ç­‰ç´šé™£åˆ—
+									_countof(FeatureLevel),//æ”¯æ´çš„åŠŸèƒ½ç­‰ç´šå…§çš„å…ƒç´ æ•¸
+									D3D11_SDK_VERSION,//SDKç‰ˆæœ¬
+									&scd, //SwapChainæè¿°
+									this->swapchain.GetAddressOf(),//SwapChainæŒ‡é‡
+									this->device.GetAddressOf(),	//DeviceæŒ‡é‡
+									NULL,//æ”¯æ´çš„åŠŸèƒ½ç­‰ç´š
+									this->deviceContext.GetAddressOf()//Deviceå¹€æŒ‡é‡
 									);
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"¸Ë¸m»P¥æ´«Ãì³Ğ«Ø¥¢±Ñ\nFailed to create device and swapchain.");
+		ErrorLogger::Log(hr, L"è£ç½®èˆ‡äº¤æ›éˆå‰µå»ºå¤±æ•—\nFailed to create device and swapchain.");
 		return false;
 	}
 
@@ -101,18 +105,18 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	hr = this->swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBuffer.GetAddressOf()));
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"½w½Ä°ÏÀò¨ú¥¢±Ñ\nGetBuffer Failed.");
+		ErrorLogger::Log(hr, L"ç·©è¡å€ç²å–å¤±æ•—\nGetBuffer Failed.");
 		return false;
 	}
 
 	hr = this->device->CreateRenderTargetView(backBuffer.Get(), NULL, this->renderTargetView.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"´è¬Vµø¹Ï³Ğ«Ø¥¢±Ñ\nFailed to create render target view.");
+		ErrorLogger::Log(hr, L"æ¸²æŸ“è¦–åœ–å‰µå»ºå¤±æ•—\nFailed to create render target view.");
 		return false;
 	}
 
-	//²`«×¼ÒªO½w½Ä°Ï´y­z(Depth/Stencil Buffer)
+	//æ·±åº¦æ¨¡æ¿ç·©è¡å€æè¿°(Depth/Stencil Buffer)
 	D3D11_TEXTURE2D_DESC depthStencilDesc {};
 	depthStencilDesc.Width = width;
 	depthStencilDesc.Height = height;
@@ -129,35 +133,35 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	hr = this->device->CreateTexture2D(&depthStencilDesc, NULL, this->depthStencilBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"²`«×¼ÒªO³Ğ«Ø¥¢±Ñ\nFailed to create depth stencil buffer");
+		ErrorLogger::Log(hr, L"æ·±åº¦æ¨¡æ¿å‰µå»ºå¤±æ•—\nFailed to create depth stencil buffer");
 		return false;
 	}
 
 	hr = this->device->CreateDepthStencilView(this->depthStencilBuffer.Get(), NULL, this->depthStencilView.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"²`«×¼ÒªO³Ğ«Ø¥¢±Ñ\nFailed to create depth stencil view.");
+		ErrorLogger::Log(hr, L"æ·±åº¦æ¨¡æ¿å‰µå»ºå¤±æ•—\nFailed to create depth stencil view.");
 		return false;
 	}
 
-	//Output Merger ¦X¨Ö¿é¥X
+	//Output Merger åˆä½µè¼¸å‡º
 	this->deviceContext->OMSetRenderTargets(1, renderTargetView.GetAddressOf(), depthStencilView.Get());
 
-	//Create depth stencil «Ø¥ß²`«×¼ÒªOª¬ºA
+	//Create depth stencil å»ºç«‹æ·±åº¦æ¨¡æ¿ç‹€æ…‹
 	D3D11_DEPTH_STENCIL_DESC depthstencildesc;
 	ZeroMemory(&depthstencildesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
-	depthstencildesc.DepthEnable = true;//±Ò¥Î²`«×´ú¸Õ
-	depthstencildesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;//¶}±Ò²`«×¼ÒªO¼g¤J¦Ü½w½Ä°Ï
-	depthstencildesc.DepthFunc = D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;//¨M©w²`«×´À´«Åã¥Ü
+	depthstencildesc.DepthEnable = true;//å•Ÿç”¨æ·±åº¦æ¸¬è©¦
+	depthstencildesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;//é–‹å•Ÿæ·±åº¦æ¨¡æ¿å¯«å…¥è‡³ç·©è¡å€
+	depthstencildesc.DepthFunc = D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;//æ±ºå®šæ·±åº¦æ›¿æ›é¡¯ç¤º
 	hr = this->device->CreateDepthStencilState(&depthstencildesc, this->depthStencilState.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"²`«×¼ÒªOª¬ºA³Ğ«Ø¥¢±Ñ\nFailed to create depth stencil state.");
+		ErrorLogger::Log(hr, L"æ·±åº¦æ¨¡æ¿ç‹€æ…‹å‰µå»ºå¤±æ•—\nFailed to create depth stencil state.");
 		return false;
 	}
 
-	//¥ú¬]¾¹³]¸m
-	//³Ğ«ØVIEWPORT
+	//å…‰æŸµå™¨è¨­ç½®
+	//å‰µå»ºVIEWPORT
 	D3D11_VIEWPORT viewport;
 	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
 	viewport.TopLeftX = 0.0f;
@@ -166,32 +170,54 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	viewport.Height = static_cast<float>(height);
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
-	this->deviceContext->RSSetViewports(1, &viewport);//³]¸mViewport
-	//¥ú¬]¾¹ª¬ºA
+	this->deviceContext->RSSetViewports(1, &viewport);//è¨­ç½®Viewport
+	//å…‰æŸµå™¨ç‹€æ…‹
 	D3D11_RASTERIZER_DESC rasterizerDesc;
 	ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rasterizerDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
-	rasterizerDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;//¨M©wÃ¸»s¥¿­±©Î­I­±
-	rasterizerDesc.FrontCounterClockwise = FALSE;//¿ï¾Ü©Ê-¥i¤£³]©w¡ATRUE=°f®É°wÃ¸»s, (¹w³])FALSE=¶¶®É°wÃ¸»s
+	rasterizerDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;//æ±ºå®šç¹ªè£½æ­£é¢æˆ–èƒŒé¢
+	rasterizerDesc.FrontCounterClockwise = FALSE;//é¸æ“‡æ€§-å¯ä¸è¨­å®šï¼ŒTRUE=é€†æ™‚é‡ç¹ªè£½, (é è¨­)FALSE=é †æ™‚é‡ç¹ªè£½
 	hr = this->device->CreateRasterizerState(&rasterizerDesc, this->resterizerState.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"¥ú¬]¾¹ª¬ºA«Ø¥ß¥¢±Ñ\nFailed to create rasterizer state.");
+		ErrorLogger::Log(hr, L"å…‰æŸµå™¨ç‹€æ…‹å»ºç«‹å¤±æ•—\nFailed to create rasterizer state.");
 		return false;
 	}
-	//¥ú¬]¾¹³]¸m§¹¦¨
+	//å…‰æŸµå™¨è¨­ç½®å®Œæˆ
+
+	//å­—ä¸²è¼¸å‡º
+	spriteBatch = std::make_unique<DirectX::SpriteBatch>(this->deviceContext.Get());
+	spriteFont = std::make_unique<DirectX::SpriteFont>(this->device.Get(), L"..\\Data\\Fonts\\MS_Sans_Serif_16");
+
+	//å‰µå»ºæ¡æ¨£å™¨æè¿°ä¸¦é™„åŠ è‡³æ¡æ¨£å™¨ç‹€æ…‹
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;//Xåº§æ¨™
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;//Yåº§æ¨™
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;//Zåº§æ¨™(æš«ä¸ä½¿ç”¨)
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = this->device->CreateSamplerState(&sampDesc, this->samplerState.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"æ¡æ¨£å™¨å‰µå»ºå¤±æ•—\nFailed to  create sampler state.");
+		return false;
+	}
+
 	return true;
 }
 
 bool Graphics::InitializeShaders()
 {
 
-	//InputLayout©w¸q³»ÂI¦p¦ó¶Ç»¼¨ì³»ÂIµÛ¦â¾¹
-	//µ²ºc¸Ñ»¡:https://blog.csdn.net/u010333737/article/details/78682213#%E5%89%8D%E8%A8%80
+	//InputLayoutå®šç¾©é ‚é»å¦‚ä½•å‚³éåˆ°é ‚é»è‘—è‰²å™¨
+	//çµæ§‹è§£èªª:https://blog.csdn.net/u010333737/article/details/78682213#%E5%89%8D%E8%A8%80
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{"POSITION", 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0,DXGI_FORMAT_R32G32_FLOAT,0,D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -211,14 +237,18 @@ bool Graphics::InitializeShaders()
 
 bool Graphics::InitializeScene()
 {
-	//²Ä¤@­Ó¤T¨¤§Î
+	//ç¬¬ä¸€å€‹ä¸‰è§’å½¢
 	Vertex v[] =
 	{
-		Vertex(-3.0f, -3.0f, 1.0f, 1.0f, 0.0f, 0.0f),//²Ä¤T¶H­­
-		Vertex( 0.0f,  3.0f, 1.0f, 1.0f, 0.0f, 0.0f),//Y¶b
-		Vertex( 3.0f, -3.0f, 1.0f, 1.0f, 0.0f, 0.0f),//²Ä¥|¶H­­
-		//Vertex(0.1f,0.0f),
-		//Vertex(0.0f,0.1f),
+		
+		Vertex(-8.0f,  8.0f, 1.0f, 0.0f, 0.0f),//å·¦ä¸Š
+		Vertex( 8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//å³ä¸Š
+		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//å·¦ä¸‹
+
+		
+		Vertex( 8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//å³ä¸Š
+		Vertex( 8.0f, -8.0f, 1.0f, 1.0f, 1.0f),//å³ä¸‹
+		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//å·¦ä¸‹
 	};
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
@@ -235,34 +265,15 @@ bool Graphics::InitializeScene()
 	HRESULT hr = this->device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, this->vertexBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"³»ÂI½w½Ä°Ï³Ğ«Ø¥¢±Ñ\nFailed To create vertex buffer.");
+		ErrorLogger::Log(hr, L"é ‚é»ç·©è¡å€å‰µå»ºå¤±æ•—\nFailed To create vertex buffer.");
 		return false;
 	}
 
-	//²Ä¤G­Ó¤T¨¤§Î
-	Vertex v2[] =
-	{
-		Vertex(-1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f),//²Ä¤T¶H­­
-		Vertex( 0.0f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f),//Y¶b
-		Vertex( 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f),//²Ä¥|¶H­­
-		//Vertex(0.1f,0.0f),
-		//Vertex(0.0f,0.1f),
-	};
-
-	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-	vertexBufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v2);
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-
-	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = v2;
-
-	hr = this->device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, this->vertexBuffer2.GetAddressOf());
+	//ç´‹ç†å¯ä»¥å„²å­˜åœ¨ ID3DResource æˆ– ID3DShaderResourceView
+	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), L"..\\Data\\Textures\\MakeDirectX.png", nullptr, this->myTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"³»ÂI½w½Ä°Ï³Ğ«Ø¥¢±Ñ\nFailed To create vertex buffer.");
+		ErrorLogger::Log(hr, L"å¾æª”æ¡ˆæå–ç´‹ç†å¤±æ•—\nFailed to create wic texture from file.");
 		return false;
 	}
 

@@ -37,12 +37,21 @@ bool RenderWindow::Initialize(WindowContainer *pWindowContainer, HINSTANCE hInst
 
 	this->RegisterWindowClass();
 
+	UINT centerScreenX = GetSystemMetrics(SM_CXSCREEN) / 2 - this->width / 2;
+	UINT centerScreenY = GetSystemMetrics(SM_CYSCREEN) / 2 - this->height / 2;
+	RECT wr{};//視窗起始點定義
+	wr.left = centerScreenX;//PosX
+	wr.top = centerScreenY;//PosY
+	wr.right = wr.left + this->width;//XSize
+	wr.bottom = wr.top + this->height;//YSize
+	AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+
 	this->handle = CreateWindowEx(0,//擴展Windows樣式, 0=使用預設
 		this->window_class.c_str(),//視窗類別
 		this->window_title.c_str(),//視窗標題
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, //窗口樣式
-		0, 0, //PosX, PosY
-		this->width, this->height, //XSize, YSize
+		wr.left, wr.top, //PosX, PosY
+		wr.right - wr.left, wr.bottom - wr.top, //XSize, YSize
 		NULL, NULL, //父窗口,選單或子窗口
 		this->hInstance, pWindowContainer);//欲使用的窗口模塊，窗口附加參數
 
