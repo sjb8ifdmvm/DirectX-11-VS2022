@@ -2,9 +2,12 @@
 #include "AdapterReader.h"
 #include "Shaders.h"
 #include "Vertex.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 #include <WICTextureLoader.h>
+#include "ConstantBuffer.h"
 
 class Graphics
 {
@@ -15,7 +18,7 @@ private:
 	bool InitializeDirectX(HWND hWnd, int width, int height);
 	bool InitializeShaders();
 	bool InitializeScene();
-	
+
 	//渲染管道基本要件開始
 	Microsoft::WRL::ComPtr<ID3D11Device> device;//硬體裝置指針
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext;//Frame 幀指針
@@ -27,7 +30,9 @@ private:
 	//渲染管道基本要件結束
 
 	//圖像
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
+	VertexBuffer<Vertex>vertexBuffer;
+	IndexBuffer indexBuffer;
+	ConstantBuffer<CB_VS_vertexshader> constantBuffer;
 
 	//深度
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;

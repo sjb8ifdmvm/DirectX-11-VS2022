@@ -27,16 +27,21 @@ void Graphics::RenderFrame()
 	this->deviceContext->PSSetSamplers(0, 1, this->samplerState.GetAddressOf());
 	this->deviceContext->VSSetShader(this->vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
-	
 
-
-	UINT stride = sizeof(Vertex);//緩衝區大小
 	UINT offset = 0;//偏移值
+
+	//刷新常量緩衝區
+	constantBuffer.data.xOffset = 2.0f;
+	constantBuffer.data.yOffset = 2.0f;
+	if (!constantBuffer.ApplyChanges())
+		return;
+	this->deviceContext->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
 
 	//正方形
 	this->deviceContext->PSSetShaderResources(0, 1, this->myTexture.GetAddressOf());
-	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexBuffer.GetAddressOf(), &stride, &offset);
-	this->deviceContext->Draw(6, 0);
+	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
+	this->deviceContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
 
 	//字串輸出
 	spriteBatch->Begin();
@@ -75,26 +80,26 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	scd.Windowed = TRUE;
 	scd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	
+
 	D3D_FEATURE_LEVEL FeatureLevel[] = { D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0,
 								D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0,
 								D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0,
-								D3D_FEATURE_LEVEL_9_3, D3D_FEATURE_LEVEL_9_2, D3D_FEATURE_LEVEL_9_1};
+								D3D_FEATURE_LEVEL_9_3, D3D_FEATURE_LEVEL_9_2, D3D_FEATURE_LEVEL_9_1 };
 	HRESULT hr;
 	hr = D3D11CreateDeviceAndSwapChain(
-									adapters[0].pAdapter,//IDXGI Adapter
-									D3D_DRIVER_TYPE_UNKNOWN,
-									NULL,//FOR SOFTWARE DRIVER TYPE
-									NULL,//創建時的額外屬性
-									FeatureLevel	,//功能等級陣列
-									_countof(FeatureLevel),//支援的功能等級內的元素數
-									D3D11_SDK_VERSION,//SDK版本
-									&scd, //SwapChain描述
-									this->swapchain.GetAddressOf(),//SwapChain指針
-									this->device.GetAddressOf(),	//Device指針
-									NULL,//支援的功能等級
-									this->deviceContext.GetAddressOf()//Device幀指針
-									);
+		adapters[0].pAdapter,//IDXGI Adapter
+		D3D_DRIVER_TYPE_UNKNOWN,
+		NULL,//FOR SOFTWARE DRIVER TYPE
+		NULL,//創建時的額外屬性
+		FeatureLevel,//功能等級陣列
+		_countof(FeatureLevel),//支援的功能等級內的元素數
+		D3D11_SDK_VERSION,//SDK版本
+		&scd, //SwapChain描述
+		this->swapchain.GetAddressOf(),//SwapChain指針
+		this->device.GetAddressOf(),	//Device指針
+		NULL,//支援的功能等級
+		this->deviceContext.GetAddressOf()//Device幀指針
+	);
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"裝置與交換鏈創建失敗\nFailed to create device and swapchain.");
@@ -117,7 +122,7 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	}
 
 	//深度模板緩衝區描述(Depth/Stencil Buffer)
-	D3D11_TEXTURE2D_DESC depthStencilDesc {};
+	D3D11_TEXTURE2D_DESC depthStencilDesc{};
 	depthStencilDesc.Width = width;
 	depthStencilDesc.Height = height;
 	depthStencilDesc.MipLevels = 1;
@@ -225,7 +230,7 @@ bool Graphics::InitializeShaders()
 	WCHAR exePath[MAX_PATH + 1];
 	ZeroMemory(&exePath, sizeof(exePath));
 	GetModuleFileName(NULL, exePath, MAX_PATH);
-	
+
 	if (!vertexshader.Initialize(this->device, (std::wstring)exePath + L"\\..\\vertexshader.cso", layout, numElements))
 		return false;
 
@@ -237,35 +242,34 @@ bool Graphics::InitializeShaders()
 
 bool Graphics::InitializeScene()
 {
-	//第一個三角形
+	//正方形
 	Vertex v[] =
 	{
-		
+		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//左下
 		Vertex(-8.0f,  8.0f, 1.0f, 0.0f, 0.0f),//左上
-		Vertex( 8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//右上
-		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//左下
-
-		
-		Vertex( 8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//右上
-		Vertex( 8.0f, -8.0f, 1.0f, 1.0f, 1.0f),//右下
-		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//左下
+		Vertex(8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//右上
+		Vertex(8.0f, -8.0f, 1.0f, 1.0f, 1.0f),//右下
 	};
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-	vertexBufferDesc.ByteWidth = sizeof(Vertex) * ARRAYSIZE(v);
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA vertexBufferData;
-	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = v;
-
-	HRESULT hr = this->device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, this->vertexBuffer.GetAddressOf());
+	//初始化頂點著色器
+	HRESULT hr = this->vertexBuffer.Initialize(this->device.Get(), v, ARRAYSIZE(v));
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"頂點緩衝區創建失敗\nFailed To create vertex buffer.");
+		return false;
+	}
+
+	DWORD indices[] =
+	{
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	//初始化頂點著色器索引
+	hr = this->indexBuffer.Initialize(this->device.Get(), indices, ARRAYSIZE(indices));
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"創建Indices緩衝區失敗\nFailed to create indices buffer.");
 		return false;
 	}
 
@@ -274,6 +278,14 @@ bool Graphics::InitializeScene()
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"從檔案提取紋理失敗\nFailed to create wic texture from file.");
+		return false;
+	}
+
+	//初始化常量緩衝區
+	hr = this->constantBuffer.Initialize(this->device.Get(), this->deviceContext.Get());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"常量緩衝區初始化失敗\nFailed to initialize constant buffer.");
 		return false;
 	}
 
