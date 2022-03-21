@@ -2,12 +2,9 @@
 #include "AdapterReader.h"
 #include "Shaders.h"
 #include "Vertex.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 #include <WICTextureLoader.h>
-#include "ConstantBuffer.h"
 
 class Graphics
 {
@@ -30,9 +27,7 @@ private:
 	//渲染管道基本要件結束
 
 	//圖像
-	VertexBuffer<Vertex>vertexBuffer;
-	IndexBuffer indexBuffer;
-	ConstantBuffer<CB_VS_vertexshader> constantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 
 	//深度
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
