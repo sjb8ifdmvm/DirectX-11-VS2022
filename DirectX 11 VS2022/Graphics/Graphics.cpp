@@ -1,8 +1,11 @@
 ﻿#include "Graphics.h"
-
+#include <DirectXMath.h>
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
-	if (!InitializeDirectX(hWnd, width, height))
+	this->WindowWidth = width;
+	this->WindowHeight = height;
+
+	if (!InitializeDirectX(hWnd))
 		return false;
 
 	if (!InitializeShaders())
@@ -31,8 +34,10 @@ void Graphics::RenderFrame()
 	UINT offset = 0;//偏移值
 
 	//刷新常量緩衝區
-	constantBuffer.data.xOffset = 2.0f;
-	constantBuffer.data.yOffset = 2.0f;
+	XMMATRIX world = XMMatrixIdentity();
+	camera.AdjustPosition(0.0f, 0.01f, 0.0f);
+	constantBuffer.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
+	constantBuffer.data.mat = DirectX::XMMatrixTranspose(constantBuffer.data.mat);
 	if (!constantBuffer.ApplyChanges())
 		return;
 	this->deviceContext->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
@@ -52,7 +57,7 @@ void Graphics::RenderFrame()
 	this->swapchain->Present(1, NULL);// 1=V-SYNC ON, 0=V-SYNC OFF
 }
 
-bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
+bool Graphics::InitializeDirectX(HWND hWnd)
 {
 	std::vector<AdapterData> adapters = AdapterReader::GetAdapters();
 
@@ -65,8 +70,8 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
-	scd.BufferDesc.Width = width;
-	scd.BufferDesc.Height = height;
+	scd.BufferDesc.Width = this->WindowWidth;
+	scd.BufferDesc.Height = this->WindowHeight;
 	scd.BufferDesc.RefreshRate.Numerator = 60;//刷新率分子
 	scd.BufferDesc.RefreshRate.Denominator = 1;//刷新率分母
 	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//讀取格式
@@ -123,8 +128,8 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 
 	//深度模板緩衝區描述(Depth/Stencil Buffer)
 	D3D11_TEXTURE2D_DESC depthStencilDesc{};
-	depthStencilDesc.Width = width;
-	depthStencilDesc.Height = height;
+	depthStencilDesc.Width = this->WindowWidth;
+	depthStencilDesc.Height = this->WindowHeight;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -171,8 +176,8 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
-	viewport.Width = static_cast<float>(width);
-	viewport.Height = static_cast<float>(height);
+	viewport.Width = static_cast<float>(this->WindowWidth);
+	viewport.Height = static_cast<float>(this->WindowHeight);
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	this->deviceContext->RSSetViewports(1, &viewport);//設置Viewport
@@ -192,7 +197,7 @@ bool Graphics::InitializeDirectX(HWND hWnd, int width, int height)
 
 	//字串輸出
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(this->deviceContext.Get());
-	spriteFont = std::make_unique<DirectX::SpriteFont>(this->device.Get(), L"..\\Data\\Fonts\\MS_Sans_Serif_16");
+	spriteFont = std::make_unique<DirectX::SpriteFont>(this->device.Get(), L"Data\\Fonts\\MS_Sans_Serif_16");
 
 	//創建採樣器描述並附加至採樣器狀態
 	D3D11_SAMPLER_DESC sampDesc;
@@ -227,14 +232,20 @@ bool Graphics::InitializeShaders()
 
 	UINT numElements = ARRAYSIZE(layout);
 
-	WCHAR exePath[MAX_PATH + 1];
-	ZeroMemory(&exePath, sizeof(exePath));
-	GetModuleFileName(NULL, exePath, MAX_PATH);
+	WCHAR exeP[256];
+	GetCurrentDirectory(256, exeP);
 
-	if (!vertexshader.Initialize(this->device, (std::wstring)exePath + L"\\..\\vertexshader.cso", layout, numElements))
+	std::wstring str2;
+	str2 = exeP;
+	str2 += L"\\vertexshader.cso";
+
+	if (!vertexshader.Initialize(this->device, str2.c_str(), layout, numElements))
 		return false;
 
-	if (!pixelshader.Initialize(this->device, (std::wstring)exePath + L"\\..\\pixelshader.cso"))
+	str2 = exeP;
+	str2 += L"\\pixelshader.cso";
+
+	if (!pixelshader.Initialize(this->device, str2.c_str()))
 		return false;
 
 	return true;
@@ -245,10 +256,10 @@ bool Graphics::InitializeScene()
 	//正方形
 	Vertex v[] =
 	{
-		Vertex(-8.0f, -8.0f, 1.0f, 0.0f, 1.0f),//左下
-		Vertex(-8.0f,  8.0f, 1.0f, 0.0f, 0.0f),//左上
-		Vertex(8.0f,  8.0f, 1.0f, 1.0f, 0.0f),//右上
-		Vertex(8.0f, -8.0f, 1.0f, 1.0f, 1.0f),//右下
+		Vertex(-0.5f, -0.5f, 0.0f, 0.0f, 1.0f),//左下
+		Vertex(-0.5f,  0.5f, 0.0f, 0.0f, 0.0f),//左上
+		Vertex( 0.5f,  0.5f, 0.0f, 1.0f, 0.0f),//右上
+		Vertex( 0.5f, -0.5f, 0.0f, 1.0f, 1.0f),//右下
 	};
 
 	//初始化頂點著色器
@@ -273,8 +284,14 @@ bool Graphics::InitializeScene()
 		return false;
 	}
 
+	WCHAR exe[256];
+	GetCurrentDirectory(256, exe);
+
+	std::wstring str1;
+	str1 = exe;
+	str1 += L"\\Data\\Textures\\MakeDirectX.png";
 	//紋理可以儲存在 ID3DResource 或 ID3DShaderResourceView
-	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), L"..\\Data\\Textures\\MakeDirectX.png", nullptr, this->myTexture.GetAddressOf());
+	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->myTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"從檔案提取紋理失敗\nFailed to create wic texture from file.");
@@ -288,6 +305,9 @@ bool Graphics::InitializeScene()
 		ErrorLogger::Log(hr, L"常量緩衝區初始化失敗\nFailed to initialize constant buffer.");
 		return false;
 	}
+
+	camera.SetPosition(0.0f, 0.0f, -2.0f);
+	camera.SetProjectionValues(90.0f, static_cast<float>(WindowWidth) / static_cast<float>(WindowHeight), 5.0f, 1000.0f);
 
 	return true;
 }

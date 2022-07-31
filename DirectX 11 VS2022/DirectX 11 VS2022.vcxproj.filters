@@ -72,6 +72,9 @@
     <ClCompile Include="Graphics\Shaders.cpp">
       <Filter>來源檔案\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Camera.cpp">
+      <Filter>來源檔案\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringConverter.h">
@@ -120,6 +123,9 @@
       <Filter>標頭檔\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\IndexBuffer.h">
+      <Filter>標頭檔\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Camera.h">
       <Filter>標頭檔\Graphics</Filter>
     </ClInclude>
   </ItemGroup>

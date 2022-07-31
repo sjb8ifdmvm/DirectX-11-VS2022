@@ -8,6 +8,7 @@
 #include <SpriteFont.h>
 #include <WICTextureLoader.h>
 #include "ConstantBuffer.h"
+#include "Camera.h"
 
 class Graphics
 {
@@ -15,7 +16,7 @@ public:
 	bool Initialize(HWND hWnd, int width, int height);
 	void RenderFrame();
 private:
-	bool InitializeDirectX(HWND hWnd, int width, int height);
+	bool InitializeDirectX(HWND hWnd);
 	bool InitializeShaders();
 	bool InitializeScene();
 
@@ -49,4 +50,10 @@ private:
 	//紋理
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;//採樣器
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> myTexture;//儲存紋理
+
+	int WindowWidth = 0;
+	int WindowHeight = 0;
+
+	//相機
+	Camera camera;
 };
