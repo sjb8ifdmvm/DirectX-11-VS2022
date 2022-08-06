@@ -1,9 +1,10 @@
 ﻿#include "Graphics.h"
-#include <DirectXMath.h>
+
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
 	this->WindowWidth = width;
 	this->WindowHeight = height;
+	this->fpsTimer.Start();
 
 	if (!InitializeDirectX(hWnd))
 		return false;
@@ -14,6 +15,14 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
 	if (!InitializeScene())
 		return false;
 
+	//Setup ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui_ImplWin32_Init(hWnd);
+	ImGui_ImplDX11_Init(this->device.Get(), this->deviceContext.Get());
+	ImGui::StyleColorsClassic();
+
 	return true;
 }
 
@@ -21,10 +30,10 @@ void Graphics::RenderFrame()
 {
 	float bgcolor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	this->deviceContext->ClearRenderTargetView(this->renderTargetView.Get(), bgcolor);
-	this->deviceContext->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.2f, 0);
+	this->deviceContext->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	this->deviceContext->IASetInputLayout(this->vertexshader.GetInputLayout());
-	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	this->deviceContext->RSSetState(this->resterizerState.Get());
 	this->deviceContext->OMSetDepthStencilState(this->depthStencilState.Get(), 0);
 	this->deviceContext->PSSetSamplers(0, 1, this->samplerState.GetAddressOf());
@@ -34,13 +43,14 @@ void Graphics::RenderFrame()
 	UINT offset = 0;//偏移值
 
 	//刷新常量緩衝區
-	XMMATRIX world = XMMatrixIdentity();
-	camera.AdjustPosition(0.0f, 0.01f, 0.0f);
-	constantBuffer.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
-	constantBuffer.data.mat = DirectX::XMMatrixTranspose(constantBuffer.data.mat);
-	if (!constantBuffer.ApplyChanges())
+	static float translationOffset[3] = { 0.0f, 0.0f, 0.0f };
+	XMMATRIX world = XMMatrixTranslation(translationOffset[0], translationOffset[1], translationOffset[2]);
+	cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
+	cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
+
+	if (!cb_vs_vertexshader.ApplyChanges())
 		return;
-	this->deviceContext->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
+	this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
 
 	//正方形
 	this->deviceContext->PSSetShaderResources(0, 1, this->myTexture.GetAddressOf());
@@ -49,10 +59,35 @@ void Graphics::RenderFrame()
 	this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
 
 	//字串輸出
+	static int fpsCounter = 0;
+	static std::wstring fpsString = L"FPS: 0";
+	fpsCounter++;
+	if (fpsTimer.GetMilisecondsElapsed() > 1000.0f)
+	{
+		fpsString = L"FPS: " + std::to_wstring(fpsCounter);
+		fpsCounter = 0;
+		fpsTimer.Restart();
+	}
 	spriteBatch->Begin();
+	spriteFont->DrawString(spriteBatch.get(), fpsString.c_str(), DirectX::XMFLOAT2(float(WindowWidth - 100), 0), DirectX::Colors::White, 0.0f, DirectX::XMFLOAT2(0.0f, 0.0f), DirectX::XMFLOAT2(1.0f, 1.0f));
 	spriteFont->DrawString(spriteBatch.get(), L"HELLO World\n你好，世界", DirectX::XMFLOAT2(0, 0), DirectX::Colors::White, 0.0f, DirectX::XMFLOAT2(0.0f, 0.0f), DirectX::XMFLOAT2(1.0f, 1.0f));
 	spriteBatch->End();
 
+
+	//------------------ ImGui Implement --------------------
+	//執行Dear ImGui 框架
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+	//建立 ImGui 測試視窗
+	ImGui::Begin("ImGui Window");
+	ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
+	ImGui::End();
+	//Assemble Together Draw Data
+	ImGui::Render();
+	//Render Draw Data
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	//------------------ ImGui Implement --------------------
 
 	this->swapchain->Present(1, NULL);// 1=V-SYNC ON, 0=V-SYNC OFF
 }
@@ -176,8 +211,8 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
-	viewport.Width = static_cast<float>(this->WindowWidth);
-	viewport.Height = static_cast<float>(this->WindowHeight);
+	viewport.Width = this->WindowWidth;
+	viewport.Height = this->WindowHeight;
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	this->deviceContext->RSSetViewports(1, &viewport);//設置Viewport
@@ -194,6 +229,9 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 		return false;
 	}
 	//光柵器設置完成
+
+	//建立混合狀態	
+	//混合狀態設置完成
 
 	//字串輸出
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(this->deviceContext.Get());
@@ -289,7 +327,7 @@ bool Graphics::InitializeScene()
 
 	std::wstring str1;
 	str1 = exe;
-	str1 += L"\\Data\\Textures\\MakeDirectX.png";
+	str1 += L"\\Data\\Textures\\piano.png";
 	//紋理可以儲存在 ID3DResource 或 ID3DShaderResourceView
 	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->myTexture.GetAddressOf());
 	if (FAILED(hr))
@@ -299,10 +337,10 @@ bool Graphics::InitializeScene()
 	}
 
 	//初始化常量緩衝區
-	hr = this->constantBuffer.Initialize(this->device.Get(), this->deviceContext.Get());
+	hr = this->cb_vs_vertexshader.Initialize(this->device.Get(), this->deviceContext.Get());
 	if (FAILED(hr))
 	{
-		ErrorLogger::Log(hr, L"常量緩衝區初始化失敗\nFailed to initialize constant buffer.");
+		ErrorLogger::Log(hr, L"頂點著色器緩衝區初始化失敗\nFailed to initialize vertexshader buffer.");
 		return false;
 	}
 

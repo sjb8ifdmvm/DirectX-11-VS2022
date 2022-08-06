@@ -9,12 +9,20 @@
 #include <WICTextureLoader.h>
 #include "ConstantBuffer.h"
 #include "Camera.h"
+#include "..\\Timer.h"
+
+//------- ImGui
+#include "ImGui\\imgui.h"
+#include "ImGui\\imgui_impl_win32.h"
+#include "ImGui\\imgui_impl_dx11.h"
 
 class Graphics
 {
 public:
 	bool Initialize(HWND hWnd, int width, int height);
 	void RenderFrame();
+	Camera camera;
+
 private:
 	bool InitializeDirectX(HWND hWnd);
 	bool InitializeShaders();
@@ -31,9 +39,10 @@ private:
 	//渲染管道基本要件結束
 
 	//圖像
+	ConstantBuffer<CB_VS_vertexshader> cb_vs_vertexshader;
+
 	VertexBuffer<Vertex>vertexBuffer;
 	IndexBuffer indexBuffer;
-	ConstantBuffer<CB_VS_vertexshader> constantBuffer;
 
 	//深度
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
@@ -42,6 +51,9 @@ private:
 
 	//光柵器
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState;
+
+	//混合器
+	Microsoft::WRL::ComPtr<ID3D11BlendState> blendState;
 
 	//字串顯示輸出
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
@@ -53,7 +65,5 @@ private:
 
 	int WindowWidth = 0;
 	int WindowHeight = 0;
-
-	//相機
-	Camera camera;
+	Timer fpsTimer;
 };

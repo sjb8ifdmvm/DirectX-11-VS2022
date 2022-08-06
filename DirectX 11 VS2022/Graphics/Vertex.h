@@ -2,17 +2,10 @@
 #include <DirectXMath.h>
 
 struct Vertex
-{/*
-	Vertex()
-	:
-	pos(0.0f,0.0f)
-	{  }*/
+{
+	Vertex() {  }
 	Vertex(float x, float y, float z, float u, float v)
-		:
-		pos(x, y, z),
-		texCoord(u, v)
-	{}
+		: pos(x, y, z), texCoord(u, v) {}
 	DirectX::XMFLOAT3 pos;
-	
 	DirectX::XMFLOAT2 texCoord;
 };

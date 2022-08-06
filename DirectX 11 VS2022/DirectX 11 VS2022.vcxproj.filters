@@ -31,6 +31,12 @@
     <Filter Include="標頭檔\Graphics">
       <UniqueIdentifier>{c9b7d89d-25ac-4300-a802-3d5bb3a6f0c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="來源檔案\Graphics\ImGui">
+      <UniqueIdentifier>{1d559ef8-8ef9-4749-9c3a-a88e9846c67a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\Graphics\ImGui">
+      <UniqueIdentifier>{8e176bc8-dd20-4ed9-98d6-7fec6f6ffa34}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -74,6 +80,27 @@
     </ClCompile>
     <ClCompile Include="Graphics\Camera.cpp">
       <Filter>來源檔案\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui_draw.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui_impl_dx11.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui_impl_win32.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui_tables.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ImGui\imgui_widgets.cpp">
+      <Filter>來源檔案\Graphics\ImGui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +153,36 @@
       <Filter>標頭檔\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Camera.h">
+      <Filter>標頭檔\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imconfig.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imgui.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imgui_impl_dx11.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imgui_impl_win32.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imgui_internal.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imstb_rectpack.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imstb_textedit.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ImGui\imstb_truetype.h">
+      <Filter>標頭檔\Graphics\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\VertexBuffer.h">
       <Filter>標頭檔\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
