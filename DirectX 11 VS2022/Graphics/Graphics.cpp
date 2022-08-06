@@ -36,6 +36,7 @@ void Graphics::RenderFrame()
 	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	this->deviceContext->RSSetState(this->resterizerState.Get());
 	this->deviceContext->OMSetDepthStencilState(this->depthStencilState.Get(), 0);
+	this->deviceContext->OMSetBlendState(this->blendState.Get(), NULL, 0xFFFFFFFF);
 	this->deviceContext->PSSetSamplers(0, 1, this->samplerState.GetAddressOf());
 	this->deviceContext->VSSetShader(this->vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
@@ -48,10 +49,17 @@ void Graphics::RenderFrame()
 	cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
 	cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
 
+	//頂點著色器刷新
 	if (!cb_vs_vertexshader.ApplyChanges())
 		return;
 	this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
 
+	//像素著色器刷新
+	static float alpha = 0.1f;
+	this->cb_ps_pixelshader.data.alpha = alpha;
+	if (!cb_ps_pixelshader.ApplyChanges())
+		return;
+	this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_pixelshader.GetAddressOf());
 	//正方形
 	this->deviceContext->PSSetShaderResources(0, 1, this->myTexture.GetAddressOf());
 	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
@@ -82,6 +90,7 @@ void Graphics::RenderFrame()
 	//建立 ImGui 測試視窗
 	ImGui::Begin("ImGui Window");
 	ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
+	ImGui::DragFloat("Alpha", &alpha, 0.1f, 0.0f, 1.0f);
 	ImGui::End();
 	//Assemble Together Draw Data
 	ImGui::Render();
@@ -231,6 +240,29 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 	//光柵器設置完成
 
 	//建立混合狀態	
+	D3D11_BLEND_DESC blendDesc;
+	ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	ZeroMemory(&rtbd, sizeof(rtbd));
+
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND::D3D11_BLEND_SRC_ALPHA;
+	rtbd.DestBlend = D3D11_BLEND::D3D11_BLEND_INV_SRC_ALPHA;
+	rtbd.BlendOp = D3D11_BLEND_OP::D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND::D3D11_BLEND_ONE;
+	rtbd.DestBlendAlpha = D3D11_BLEND::D3D11_BLEND_ZERO;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP::D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	blendDesc.RenderTarget[0] = rtbd;
+
+	hr = this->device->CreateBlendState(&blendDesc, this->blendState.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"Failed to create blend state.");
+		return false;
+	}
 	//混合狀態設置完成
 
 	//字串輸出
@@ -341,6 +373,13 @@ bool Graphics::InitializeScene()
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"頂點著色器緩衝區初始化失敗\nFailed to initialize vertexshader buffer.");
+		return false;
+	}
+
+	hr = this->cb_ps_pixelshader.Initialize(this->device.Get(), this->deviceContext.Get());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
 		return false;
 	}
 

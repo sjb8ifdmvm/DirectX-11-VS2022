@@ -5,7 +5,7 @@
 #include <wrl/client.h>
 #include <memory>
 
-template<typename T>
+template<class T>
 class VertexBuffer
 {
 private:
