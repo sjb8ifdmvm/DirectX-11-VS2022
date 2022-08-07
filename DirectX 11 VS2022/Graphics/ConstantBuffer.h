@@ -20,7 +20,7 @@ private:
 public:
 	ConstantBuffer() {}
 
-	T data;
+	T data{};
 	ID3D11Buffer* Get() const { return buffer.Get(); }
 	ID3D11Buffer* const* GetAddressOf() const { return buffer.GetAddressOf(); }
 

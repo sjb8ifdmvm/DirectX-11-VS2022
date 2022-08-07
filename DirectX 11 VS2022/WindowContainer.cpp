@@ -44,14 +44,14 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (!wasPressed)
 				Keyboard.OnKeyPressed(keycode);
 		}
+		return 0;
 	}
-	break;
 	case WM_KEYUP://鍵盤彈起
 	{
 		unsigned char keycode = static_cast<unsigned char>(wParam);
 		Keyboard.OnKeyReleased(keycode);
+		return 0;
 	}
-	break;
 	case WM_CHAR://字元
 	{
 		unsigned char ch = static_cast<unsigned char>(wParam);
@@ -63,8 +63,8 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (!wasPressed)
 				Keyboard.OnChar(ch);
 		}
+		return 0;
 	}
-	break;
 	//鍵盤輸入事件結束
 	
 	//滑鼠事件起始
