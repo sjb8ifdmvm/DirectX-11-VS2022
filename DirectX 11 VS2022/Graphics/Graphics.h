@@ -40,6 +40,7 @@ private:
 
 	//¹Ï¹³
 	ConstantBuffer<CB_VS_vertexshader> cb_vs_vertexshader;
+	ConstantBuffer<CB_PS_pixelshader> cb_ps_pixelshader;
 
 	VertexBuffer<Vertex>vertexBuffer;
 	IndexBuffer indexBuffer;

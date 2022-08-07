@@ -20,7 +20,7 @@ bool Engine::ProcessMessages()
 
 void Engine::update()
 {
-	float dt = timer.GetMilisecondsElapsed();
+	float dt = (float)timer.GetMilisecondsElapsed();
 	timer.Restart();
 
 	const float cameraSpeed = 0.004f;

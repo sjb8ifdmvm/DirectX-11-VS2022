@@ -15,7 +15,7 @@ WindowContainer::WindowContainer()
 
 		if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)
 		{
-			ErrorLogger::Log(GetLastError(), L"原始設備註冊失敗");
+			ErrorLogger::Log(GetLastError(), L"滑鼠原始設備註冊失敗");
 			exit(-1);
 		}
 
@@ -31,6 +31,7 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	switch (uMsg)
 	{
+
 	//鍵盤輸入事件起始
 	case WM_KEYDOWN:	//鍵盤按下
 	{
@@ -43,14 +44,14 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (!wasPressed)
 				Keyboard.OnKeyPressed(keycode);
 		}
-		return 0;
 	}
+	break;
 	case WM_KEYUP://鍵盤彈起
 	{
 		unsigned char keycode = static_cast<unsigned char>(wParam);
 		Keyboard.OnKeyReleased(keycode);
-		return 0;
 	}
+	break;
 	case WM_CHAR://字元
 	{
 		unsigned char ch = static_cast<unsigned char>(wParam);
@@ -62,8 +63,8 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (!wasPressed)
 				Keyboard.OnChar(ch);
 		}
-		return 0;
 	}
+	break;
 	//鍵盤輸入事件結束
 	
 	//滑鼠事件起始
@@ -135,7 +136,7 @@ LRESULT WindowContainer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		UINT dataSize = 0;
 
 		GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, NULL, &dataSize, sizeof(RAWINPUTHEADER));
-		
+
 		if (dataSize > 0)
 		{
 			std::unique_ptr<BYTE[]> rawdata = std::make_unique<BYTE[]>(dataSize);
