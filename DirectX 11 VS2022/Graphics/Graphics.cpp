@@ -42,29 +42,59 @@ void Graphics::RenderFrame()
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
 
 	UINT offset = 0;//偏移值
+	
+	static float alpha = 0.5f;
 
-	//刷新常量緩衝區
-	static float translationOffset[3] = { 0.0f, 0.0f, 0.0f };
-	XMMATRIX world = XMMatrixTranslation(translationOffset[0], translationOffset[1], translationOffset[2]);
-	cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
-	cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
+	{   //草地
+		//刷新常量緩衝區
+		static float translationOffset[3] = { 0.0f, 0.0f, -1.0f };
+		XMMATRIX world = XMMatrixTranslation(translationOffset[0], translationOffset[1], translationOffset[2]);
+		cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
+		cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
 
-	//頂點著色器刷新
-	if (!cb_vs_vertexshader.ApplyChanges())
-		return;
-	this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
+		//頂點著色器刷新
+		if (!cb_vs_vertexshader.ApplyChanges())
+			return;
+		this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
 
-	//像素著色器刷新
-	static float alpha = 0.1f;
-	this->cb_ps_pixelshader.data.alpha = alpha;
-	if (!cb_ps_pixelshader.ApplyChanges())
-		return;
-	this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_pixelshader.GetAddressOf());
-	//正方形
-	this->deviceContext->PSSetShaderResources(0, 1, this->myTexture.GetAddressOf());
-	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
-	this->deviceContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-	this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
+		//像素著色器刷新
+		this->cb_ps_pixelshader.data.alpha = alpha;
+		if (!cb_ps_pixelshader.ApplyChanges())
+			return;
+		this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_pixelshader.GetAddressOf());
+		//正方形
+		this->deviceContext->PSSetShaderResources(0, 1, this->grassTexture.GetAddressOf());
+		this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
+		this->deviceContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		this->deviceContext->RSSetState(this->resterizerState_CullFront.Get());
+		this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
+		this->deviceContext->RSSetState(this->resterizerState.Get());
+		this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
+	}
+
+	//{   //粉色方形
+	//	//刷新常量緩衝區
+	//	static float translationOffset[3] = { 0.0f, 0.0f, -1.0f };
+	//	XMMATRIX world = XMMatrixTranslation(translationOffset[0], translationOffset[1], translationOffset[2]);
+	//	cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
+	//	cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
+
+	//	//頂點著色器刷新
+	//	if (!cb_vs_vertexshader.ApplyChanges())
+	//		return;
+	//	this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
+
+	//	//像素著色器刷新
+	//	this->cb_ps_pixelshader.data.alpha = alpha;
+	//	if (!cb_ps_pixelshader.ApplyChanges())
+	//		return;
+	//	this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_pixelshader.GetAddressOf());
+	//	//正方形
+	//	this->deviceContext->PSSetShaderResources(0, 1, this->pinkTexture.GetAddressOf());
+	//	this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
+	//	this->deviceContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	//	this->deviceContext->DrawIndexed(indexBuffer.BufferSize(), 0, 0);
+	//}
 
 	//字串輸出
 	static int fpsCounter = 0;
@@ -89,8 +119,8 @@ void Graphics::RenderFrame()
 	ImGui::NewFrame();
 	//建立 ImGui 測試視窗
 	ImGui::Begin("ImGui Window");
-	ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
-	ImGui::DragFloat("Alpha", &alpha, 0.1f, 0.0f, 1.0f);
+	//ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
+	ImGui::DragFloat("Alpha", &alpha, 0.02f, 0.0f, 1.0f);
 	ImGui::End();
 	//Assemble Together Draw Data
 	ImGui::Render();
@@ -230,13 +260,27 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 	ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rasterizerDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
 	rasterizerDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;//決定繪製正面或背面
-	rasterizerDesc.FrontCounterClockwise = FALSE;//選擇性-可不設定，TRUE=逆時針繪製, (預設)FALSE=順時針繪製
+	//rasterizerDesc.FrontCounterClockwise = FALSE;//選擇性-可不設定，TRUE=逆時針繪製, (預設)FALSE=順時針繪製
 	hr = this->device->CreateRasterizerState(&rasterizerDesc, this->resterizerState.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"光柵器狀態建立失敗\nFailed to create rasterizer state.");
 		return false;
 	}
+
+	//光柵器狀態 繪製正面
+	D3D11_RASTERIZER_DESC rasterizerDesc_CullFront;
+	ZeroMemory(&rasterizerDesc_CullFront, sizeof(D3D11_RASTERIZER_DESC));
+	rasterizerDesc_CullFront.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+	rasterizerDesc_CullFront.CullMode = D3D11_CULL_MODE::D3D11_CULL_FRONT;//決定繪製正面或背面
+	//rasterizerDesc_CullFront.FrontCounterClockwise = FALSE;//選擇性-可不設定，TRUE=逆時針繪製, (預設)FALSE=順時針繪製
+	hr = this->device->CreateRasterizerState(&rasterizerDesc_CullFront, this->resterizerState_CullFront.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"光柵器狀態建立失敗\nFailed to create rasterizer state.");
+		return false;
+	}
+
 	//光柵器設置完成
 
 	//建立混合狀態	
@@ -326,10 +370,14 @@ bool Graphics::InitializeScene()
 	//正方形
 	Vertex v[] =
 	{
-		Vertex(-0.5f, -0.5f, 0.0f, 0.0f, 1.0f),//左下
-		Vertex(-0.5f,  0.5f, 0.0f, 0.0f, 0.0f),//左上
-		Vertex(0.5f,  0.5f, 0.0f, 1.0f, 0.0f),//右上
-		Vertex(0.5f, -0.5f, 0.0f, 1.0f, 1.0f),//右下
+		Vertex(-0.5f, -0.5f, -0.5f, 0.0f, 1.0f),	//前左下[0]
+		Vertex(-0.5f,  0.5f, -0.5f, 0.0f, 0.0f),	//前左上[1]
+		Vertex( 0.5f,  0.5f, -0.5f, 1.0f, 0.0f),	//前右上[2]
+		Vertex( 0.5f, -0.5f, -0.5f, 1.0f, 1.0f),	//前右下[3]
+		Vertex(-0.5f, -0.5f,  0.5f, 0.0f, 1.0f),	//後左下[4]
+		Vertex(-0.5f,  0.5f,  0.5f, 0.0f, 0.0f),	//後左上[5]
+		Vertex( 0.5f,  0.5f,  0.5f, 1.0f, 0.0f),	//後右上[6]
+		Vertex( 0.5f, -0.5f,  0.5f, 1.0f, 1.0f),	//後右下[7]
 	};
 
 	//初始化頂點著色器
@@ -342,8 +390,18 @@ bool Graphics::InitializeScene()
 
 	DWORD indices[] =
 	{
-		0, 1, 2,
-		0, 2, 3
+		0, 1, 2,//正左上
+		0, 2, 3,//正右下
+		4, 7, 6,//背左下
+		4, 6, 5,//背右上
+		3, 2, 6,//右左上
+		3, 6, 7,//右右下
+		4, 1, 0,//左右下
+		4, 5, 1,//左左上
+		5, 6, 1,//上左上
+		6, 2, 1,//上右下
+		0, 3, 7,//下右下
+		0, 7, 4,//下左上
 	};
 
 	//初始化頂點著色器索引
@@ -359,9 +417,19 @@ bool Graphics::InitializeScene()
 
 	std::wstring str1;
 	str1 = exe;
-	str1 += L"\\Data\\Textures\\MakeDirectX.png";
+	str1 += L"\\Data\\Textures\\seamless_pavement.jpg";
 	//紋理可以儲存在 ID3DResource 或 ID3DShaderResourceView
-	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->myTexture.GetAddressOf());
+	//加載紋理
+	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->grassTexture.GetAddressOf());
+	if (FAILED(hr))
+	{
+		ErrorLogger::Log(hr, L"從檔案提取紋理失敗\nFailed to create wic texture from file.");
+		return false;
+	}
+
+	str1 = exe;
+	str1 += L"\\Data\\Textures\\pinksquare.jpg";
+	hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->pinkTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		ErrorLogger::Log(hr, L"從檔案提取紋理失敗\nFailed to create wic texture from file.");

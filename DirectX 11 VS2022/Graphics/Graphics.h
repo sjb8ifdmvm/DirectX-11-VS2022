@@ -52,6 +52,7 @@ private:
 
 	//光柵器
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState_CullFront;
 
 	//混合器
 	Microsoft::WRL::ComPtr<ID3D11BlendState> blendState;
@@ -62,7 +63,8 @@ private:
 
 	//紋理
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;//採樣器
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> myTexture;//儲存紋理
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pinkTexture;//儲存紋理
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> grassTexture;//儲存紋理
 
 	int WindowWidth = 0;
 	int WindowHeight = 0;
