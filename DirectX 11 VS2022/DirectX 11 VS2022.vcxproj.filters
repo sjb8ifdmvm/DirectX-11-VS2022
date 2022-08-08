@@ -185,6 +185,9 @@
     <ClInclude Include="Graphics\VertexBuffer.h">
       <Filter>Header\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="COMException.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vertexshader.hlsl">

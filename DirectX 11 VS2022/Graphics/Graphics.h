@@ -43,7 +43,7 @@ private:
 	ConstantBuffer<CB_PS_pixelshader> cb_ps_pixelshader;
 
 	VertexBuffer<Vertex>vertexBuffer;
-	IndexBuffer indexBuffer;
+	IndexBuffer IndicesBuffer;
 
 	//深度
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
@@ -51,8 +51,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 
 	//光柵器
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState;
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState> resterizerState_CullFront;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState_CullFront;
 
 	//混合器
 	Microsoft::WRL::ComPtr<ID3D11BlendState> blendState;
