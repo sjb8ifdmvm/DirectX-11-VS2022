@@ -36,40 +36,15 @@ void Graphics::RenderFrame()
 	this->deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	this->deviceContext->RSSetState(this->rasterizerState.Get());
 	this->deviceContext->OMSetDepthStencilState(this->depthStencilState.Get(), 0);
-	this->deviceContext->OMSetBlendState(this->blendState.Get(), NULL, 0xFFFFFFFF);
+	this->deviceContext->OMSetBlendState(NULL, NULL, 0xFFFFFFFF);//參數1 NULL 為使用預設, this->blendState.Get() 使用混合器
 	this->deviceContext->PSSetSamplers(0, 1, this->samplerState.GetAddressOf());
 	this->deviceContext->VSSetShader(this->vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
 
 	UINT offset = 0;//偏移值
 	
-	static float alpha = 0.9f;
-
 	{   //草地
-		//刷新常量緩衝區
-		static float translationOffset[3] = { 0.0f, 0.0f, -1.0f };
-		XMMATRIX world = XMMatrixTranslation(translationOffset[0], translationOffset[1], translationOffset[2]);
-		cb_vs_vertexshader.data.mat = world * camera.GetViewMatrix() * camera.GetProjectionMatrix();
-		cb_vs_vertexshader.data.mat = DirectX::XMMatrixTranspose(cb_vs_vertexshader.data.mat);
-
-		//頂點著色器刷新
-		if (!cb_vs_vertexshader.ApplyChanges())
-			return;
-		this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader.GetAddressOf());
-
-		//像素著色器刷新
-		this->cb_ps_pixelshader.data.alpha = alpha;
-		cb_ps_pixelshader.ApplyChanges();
-		this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_pixelshader.GetAddressOf());
-
-		//正方形
-		this->deviceContext->PSSetShaderResources(0, 1, this->grassTexture.GetAddressOf());
-		this->deviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), vertexBuffer.StridePtr(), &offset);
-		this->deviceContext->IASetIndexBuffer(IndicesBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		this->deviceContext->RSSetState(this->rasterizerState_CullFront.Get());
-		this->deviceContext->DrawIndexed(IndicesBuffer.BufferSize(), 0, 0);
-		this->deviceContext->RSSetState(this->rasterizerState.Get());
-		this->deviceContext->DrawIndexed(IndicesBuffer.BufferSize(), 0, 0);
+		this->model.Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix());
 	}
 
 	//字串輸出
@@ -96,7 +71,7 @@ void Graphics::RenderFrame()
 	//建立 ImGui 測試視窗
 	ImGui::Begin("ImGui Window");
 	//ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
-	ImGui::DragFloat("Alpha", &alpha, 0.02f, 0.0f, 1.0f);
+	//ImGui::DragFloat("Alpha", &alpha, 0.02f, 0.0f, 1.0f);
 	ImGui::End();
 	//Assemble Together Draw Data
 	ImGui::Render();
@@ -283,43 +258,6 @@ bool Graphics::InitializeShaders()
 bool Graphics::InitializeScene()
 {
 	try {
-		//正方形
-		Vertex v[] =
-		{
-			Vertex(-0.5f, -0.5f, -0.5f, 0.0f, 1.0f),	//前左下[0]
-			Vertex(-0.5f,  0.5f, -0.5f, 0.0f, 0.0f),	//前左上[1]
-			Vertex(0.5f,  0.5f, -0.5f, 1.0f, 0.0f),	//前右上[2]
-			Vertex(0.5f, -0.5f, -0.5f, 1.0f, 1.0f),	//前右下[3]
-			Vertex(-0.5f, -0.5f,  0.5f, 0.0f, 1.0f),	//後左下[4]
-			Vertex(-0.5f,  0.5f,  0.5f, 0.0f, 0.0f),	//後左上[5]
-			Vertex(0.5f,  0.5f,  0.5f, 1.0f, 0.0f),	//後右上[6]
-			Vertex(0.5f, -0.5f,  0.5f, 1.0f, 1.0f),	//後右下[7]
-		};
-
-		//初始化頂點著色器
-		HRESULT hr = this->vertexBuffer.Initialize(this->device.Get(), v, ARRAYSIZE(v));
-		COM_ERROR_IF_FAILED(hr, L"頂點緩衝區創建失敗\nFailed To create vertex buffer.");
-
-
-		DWORD indices[] =
-		{
-			0, 1, 2,//正左上
-			0, 2, 3,//正右下
-			4, 7, 6,//背左下
-			4, 6, 5,//背右上
-			3, 2, 6,//右左上
-			3, 6, 7,//右右下
-			4, 1, 0,//左右下
-			4, 5, 1,//左左上
-			5, 6, 1,//上左上
-			6, 2, 1,//上右下
-			0, 3, 7,//下右下
-			0, 7, 4,//下左上
-		};
-
-		//初始化頂點著色器索引
-		hr = this->IndicesBuffer.Initialize(this->device.Get(), indices, ARRAYSIZE(indices));
-		COM_ERROR_IF_FAILED(hr, L"創建Indices緩衝區失敗\nFailed to create indices buffer.");
 
 		WCHAR exe[256];
 		GetCurrentDirectory(256, exe);
@@ -329,7 +267,7 @@ bool Graphics::InitializeScene()
 		str1 += L"\\Data\\Textures\\seamless_pavement.jpg";
 		//紋理可以儲存在 ID3DResource 或 ID3DShaderResourceView
 		//加載紋理
-		hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->grassTexture.GetAddressOf());
+		HRESULT hr = DirectX::CreateWICTextureFromFile(this->device.Get(), str1.c_str(), nullptr, this->grassTexture.GetAddressOf());
 		COM_ERROR_IF_FAILED(hr, L"從檔案提取紋理失敗\nFailed to create wic texture from file.");
 
 		str1 = exe;
@@ -343,6 +281,10 @@ bool Graphics::InitializeScene()
 
 		hr = this->cb_ps_pixelshader.Initialize(this->device.Get(), this->deviceContext.Get());
 		COM_ERROR_IF_FAILED(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
+
+		//初始化模組(s)
+		if (!model.Initialize(this->device.Get(), this->deviceContext.Get(), this->grassTexture.Get(), cb_vs_vertexshader))
+			return false;
 
 		camera.SetPosition(0.0f, 0.0f, -2.0f);
 		camera.SetProjectionValues(90.0f, static_cast<float>(WindowWidth) / static_cast<float>(WindowHeight), 0.1f, 1000.0f);

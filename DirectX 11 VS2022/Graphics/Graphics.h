@@ -1,15 +1,12 @@
 #pragma once
 #include "AdapterReader.h"
 #include "Shaders.h"
-#include "Vertex.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 #include <WICTextureLoader.h>
-#include "ConstantBuffer.h"
 #include "Camera.h"
 #include "..\\Timer.h"
+#include "Model.h"
 
 //------- ImGui
 #include "ImGui\\imgui.h"
@@ -42,8 +39,9 @@ private:
 	ConstantBuffer<CB_VS_vertexshader> cb_vs_vertexshader;
 	ConstantBuffer<CB_PS_pixelshader> cb_ps_pixelshader;
 
-	VertexBuffer<Vertex>vertexBuffer;
-	IndexBuffer IndicesBuffer;
+	//VertexBuffer<Vertex>vertexBuffer;
+	//IndexBuffer IndicesBuffer;
+	Model model;
 
 	//²`«×
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
