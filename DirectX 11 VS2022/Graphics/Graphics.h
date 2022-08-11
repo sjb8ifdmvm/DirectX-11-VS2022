@@ -19,6 +19,7 @@ public:
 	bool Initialize(HWND hWnd, int width, int height);
 	void RenderFrame();
 	Camera camera;
+	Model model;
 
 private:
 	bool InitializeDirectX(HWND hWnd);
@@ -41,7 +42,6 @@ private:
 
 	//VertexBuffer<Vertex>vertexBuffer;
 	//IndexBuffer IndicesBuffer;
-	Model model;
 
 	//²`«×
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;

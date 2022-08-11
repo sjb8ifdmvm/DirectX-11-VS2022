@@ -56,6 +56,8 @@ void Engine::update()
 		}
 	}
 
+	this->gfx.model.AdjustRotation(0.0f, 0.001f * dt, 0.0f);
+
 	if (Keyboard.KeyIsPressed('W'))
 	{
 		this->gfx.camera.AdjustPosition(this->gfx.camera.GetForwardVector() * cameraSpeed * dt);
