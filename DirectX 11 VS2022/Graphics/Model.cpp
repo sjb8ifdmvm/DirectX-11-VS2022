@@ -1,50 +1,16 @@
 #include "Model.h"
 
-bool Model::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11ShaderResourceView* texture, ConstantBuffer<CB_VS_vertexshader>& cb_vs_vertexshader)
+bool Model::Initialize(const std::string& filePath, ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11ShaderResourceView* texture, ConstantBuffer<CB_VS_vertexshader>& cb_vs_vertexshader)
 {
 	this->device = device;
 	this->deviceContext = deviceContext;
 	this->texture = texture;
 	this->cb_vs_vertexshader = &cb_vs_vertexshader;
 
-	try {
-		//正方形
-		Vertex v[] =
-		{
-			Vertex(-0.5f, -0.5f, -0.5f, 0.0f, 1.0f),	//前左下[0]
-			Vertex(-0.5f,  0.5f, -0.5f, 0.0f, 0.0f),	//前左上[1]
-			Vertex(0.5f,  0.5f, -0.5f, 1.0f, 0.0f),	//前右上[2]
-			Vertex(0.5f, -0.5f, -0.5f, 1.0f, 1.0f),	//前右下[3]
-			Vertex(-0.5f, -0.5f,  0.5f, 0.0f, 1.0f),	//後左下[4]
-			Vertex(-0.5f,  0.5f,  0.5f, 0.0f, 0.0f),	//後左上[5]
-			Vertex(0.5f,  0.5f,  0.5f, 1.0f, 0.0f),	//後右上[6]
-			Vertex(0.5f, -0.5f,  0.5f, 1.0f, 1.0f),	//後右下[7]
-		};
-
-		//初始化頂點著色器
-		HRESULT hr = this->vertexBuffer.Initialize(this->device, v, ARRAYSIZE(v));
-		COM_ERROR_IF_FAILED(hr, L"頂點緩衝區創建失敗\nFailed To create vertex buffer.");
-
-
-		DWORD indices[] =
-		{
-			0, 1, 2,//正左上
-			0, 2, 3,//正右下
-			4, 7, 6,//背左下
-			4, 6, 5,//背右上
-			3, 2, 6,//右左上
-			3, 6, 7,//右右下
-			4, 1, 0,//左右下
-			4, 5, 1,//左左上
-			5, 6, 1,//上左上
-			6, 2, 1,//上右下
-			0, 3, 7,//下右下
-			0, 7, 4,//下左上
-		};
-
-		//初始化頂點著色器索引
-		hr = this->indexBuffer.Initialize(this->device, indices, ARRAYSIZE(indices));
-		COM_ERROR_IF_FAILED(hr, L"創建Indices緩衝區失敗\nFailed to create indices buffer.");
+	try 
+	{
+		if (!this->LoadModel(filePath))
+			return false;
 	}
 	catch (COMException& exception)
 	{
@@ -70,11 +36,77 @@ void Model::Draw(const XMMATRIX& viewProjectionMatrix)
 	this->cb_vs_vertexshader->ApplyChanges();
 	this->deviceContext->VSSetConstantBuffers(0, 1, this->cb_vs_vertexshader->GetAddressOf());
 	this->deviceContext->PSSetShaderResources(0, 1, &this->texture); //Set Texture
-	this->deviceContext->IASetIndexBuffer(this->indexBuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
-;
-	UINT offset = 0;
-	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexBuffer.GetAddressOf(), this->vertexBuffer.StridePtr(), &offset);
-	this->deviceContext->DrawIndexed(this->indexBuffer.BufferSize(), 0, 0); //Draw
+
+	for (int i = 0; i < meshes.size(); i++)
+	{
+		meshes[i].Draw();
+	}
+}
+
+bool Model::LoadModel(const std::string& filePath)
+{
+	Assimp::Importer importer;
+
+	const aiScene* pScene = importer.ReadFile(filePath, 
+												aiProcess_Triangulate | 
+												aiProcess_ConvertToLeftHanded);
+
+	if (pScene == nullptr)
+		return false;
+
+	this->ProcessNode(pScene->mRootNode, pScene);
+	return true;
+}
+
+void Model::ProcessNode(aiNode* node, const aiScene* scene)
+{
+	for (UINT i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		meshes.push_back(this->ProcessMesh(mesh, scene));
+	}
+
+	for (UINT i = 0; i < node->mNumChildren; i++)
+	{
+		this->ProcessNode(node->mChildren[i], scene);
+	}
+}
+
+Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+{
+	//Data to fill
+	std::vector<Vertex> vertices;
+	std::vector<DWORD> indices;
+
+	//Get vertices
+	for (UINT i = 0; i < mesh->mNumVertices; i++)
+	{
+		Vertex vertex;
+
+		vertex.pos.x = mesh->mVertices[i].x;
+		vertex.pos.y = mesh->mVertices[i].y;
+		vertex.pos.z = mesh->mVertices[i].z;
+		
+		//從第一個紋理開始索引
+		if (mesh->mTextureCoords[0])
+		{
+			vertex.texCoord.x = (float)mesh->mTextureCoords[0][i].x;
+			vertex.texCoord.y = (float)mesh->mTextureCoords[0][i].y;
+		}
+
+		vertices.push_back(vertex);
+	}
+
+	//Get indices
+	for (UINT i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+
+		for (UINT j = 0; j < face.mNumIndices; j++)
+			indices.push_back(face.mIndices[j]);
+	}
+
+	return Mesh(this->device, this->deviceContext, vertices, indices);
 }
 
 void Model::UpdateWorldMatrix()
