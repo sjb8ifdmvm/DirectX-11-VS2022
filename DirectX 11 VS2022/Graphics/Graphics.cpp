@@ -43,8 +43,8 @@ void Graphics::RenderFrame()
 
 	UINT offset = 0;//偏移值
 	
-	{   //草地
-		this->model.Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix());
+	{
+		this->gameObject.Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix());
 	}
 
 	//字串輸出
@@ -283,7 +283,7 @@ bool Graphics::InitializeScene()
 		COM_ERROR_IF_FAILED(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
 
 		//初始化模組(s)
-		if (!model.Initialize("Data\\Objects\\nanosuit\\nanosuit.obj", this->device.Get(), this->deviceContext.Get(), this->grassTexture.Get(), cb_vs_vertexshader))
+		if (!gameObject.Initialize("Data\\Objects\\nanosuit\\nanosuit.obj", this->device.Get(), this->deviceContext.Get(), this->grassTexture.Get(), cb_vs_vertexshader))
 			return false;
 
 		camera.SetPosition(0.0f, 0.0f, -2.0f);

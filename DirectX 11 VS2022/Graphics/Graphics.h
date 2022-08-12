@@ -6,12 +6,13 @@
 #include <WICTextureLoader.h>
 #include "Camera.h"
 #include "..\\Timer.h"
-#include "Model.h"
+#include "GameObject.h"
 
 //------- ImGui
 #include "ImGui\\imgui.h"
 #include "ImGui\\imgui_impl_win32.h"
 #include "ImGui\\imgui_impl_dx11.h"
+
 
 class Graphics
 {
@@ -19,7 +20,7 @@ public:
 	bool Initialize(HWND hWnd, int width, int height);
 	void RenderFrame();
 	Camera camera;
-	Model model;
+	GameObject gameObject;
 
 private:
 	bool InitializeDirectX(HWND hWnd);
