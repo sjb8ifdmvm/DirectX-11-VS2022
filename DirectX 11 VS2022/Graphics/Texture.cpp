@@ -36,6 +36,13 @@ Texture::Texture(ID3D11Device* device, const std::string& filePath, aiTextureTyp
 	}
 }
 
+Texture::Texture(ID3D11Device* device, const uint8_t* pData, size_t size, aiTextureType type)
+{
+	this->type = type;
+	HRESULT hr = DirectX::CreateWICTextureFromMemory(device, pData, size, this->texture.GetAddressOf(), this->textureView.GetAddressOf());
+	COM_ERROR_IF_FAILED(hr, L"Failed to create texture from memory.");
+}
+
 aiTextureType Texture::GetType()
 {
 	return this->type;
@@ -51,9 +58,9 @@ ID3D11ShaderResourceView** Texture::GetTextureResourceViewAddress()
 	return this->textureView.GetAddressOf();
 }
 
-void Texture::Initialize1x1ColorTexture(ID3D11Device* device, const Color& color, aiTextureType type)
+void Texture::Initialize1x1ColorTexture(ID3D11Device* device, const Color& colorData, aiTextureType type)
 {
-	InitializeColorTexture(device, &color, 1, 1, type);
+	InitializeColorTexture(device, &colorData, 1, 1, type);
 }
 
 void Texture::InitializeColorTexture(ID3D11Device* device, const Color* colorData, UINT width, UINT height, aiTextureType type)
@@ -69,5 +76,5 @@ void Texture::InitializeColorTexture(ID3D11Device* device, const Color* colorDat
 	texture = static_cast<ID3D11Texture2D*> (p2DTexture);
 	CD3D11_SHADER_RESOURCE_VIEW_DESC srvDesc(D3D11_SRV_DIMENSION_TEXTURE2D, textureDesc.Format);
 	hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, textureView.GetAddressOf());
-	COM_ERROR_IF_FAILED(hr, L"Failed to create shader resource view from texture generated.");
+	COM_ERROR_IF_FAILED(hr, L"Failed to create shader resource view from texture generated from color data.");
 }

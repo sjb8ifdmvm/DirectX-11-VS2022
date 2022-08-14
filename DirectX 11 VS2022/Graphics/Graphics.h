@@ -61,8 +61,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;//採樣器
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pinkTexture;//儲存紋理
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> grassTexture;//儲存紋理
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pavementTexture;//儲存紋理
 
-	int WindowWidth = 0;
-	int WindowHeight = 0;
+	int windowWidth = 0;
+	int windowHeight = 0;
 	Timer fpsTimer;
 };

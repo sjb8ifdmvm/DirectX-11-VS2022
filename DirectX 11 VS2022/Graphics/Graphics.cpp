@@ -2,8 +2,8 @@
 
 bool Graphics::Initialize(HWND hWnd, int width, int height)
 {
-	this->WindowWidth = width;
-	this->WindowHeight = height;
+	this->windowWidth = width;
+	this->windowHeight = height;
 	this->fpsTimer.Start();
 
 	if (!InitializeDirectX(hWnd))
@@ -95,8 +95,8 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 
 		DXGI_SWAP_CHAIN_DESC scd = { 0 };
 
-		scd.BufferDesc.Width = this->WindowWidth;
-		scd.BufferDesc.Height = this->WindowHeight;
+		scd.BufferDesc.Width = this->windowWidth;
+		scd.BufferDesc.Height = this->windowHeight;
 		scd.BufferDesc.RefreshRate.Numerator = 60;//刷新率分子
 		scd.BufferDesc.RefreshRate.Denominator = 1;//刷新率分母
 		scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//讀取格式
@@ -141,7 +141,7 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 
 		//深度模板緩衝區描述(Depth/Stencil Buffer)
 		//D3D11_TEXTURE2D_DESC depthStencilDesc{};
-		CD3D11_TEXTURE2D_DESC depthStencilDesc(DXGI_FORMAT_D24_UNORM_S8_UINT, this->WindowWidth, this->WindowHeight);
+		CD3D11_TEXTURE2D_DESC depthStencilDesc(DXGI_FORMAT_D24_UNORM_S8_UINT, this->windowWidth, this->windowHeight);
 		depthStencilDesc.MipLevels = 1;
 		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
@@ -164,7 +164,7 @@ bool Graphics::InitializeDirectX(HWND hWnd)
 		//光柵器設置
 		//創建 與 設置 VIEWPORT
 		//D3D11_VIEWPORT viewport;
-		CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(this->WindowWidth), static_cast<float>(this->WindowHeight));
+		CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(this->windowWidth), static_cast<float>(this->windowHeight));
 		this->deviceContext->RSSetViewports(1, &viewport);//設置Viewport
 
 		//光柵器狀態
@@ -283,11 +283,11 @@ bool Graphics::InitializeScene()
 		COM_ERROR_IF_FAILED(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
 
 		//初始化模組(s)
-		if (!gameObject.Initialize("Data\\Objects\\Samples\\orange_disktexture.fbx", this->device.Get(), this->deviceContext.Get(), cb_vs_vertexshader))
+		if (!gameObject.Initialize("Data\\Objects\\Samples\\person_embeddedindexed.blend", this->device.Get(), this->deviceContext.Get(), cb_vs_vertexshader))
 			return false;
 
 		camera.SetPosition(0.0f, 0.0f, -2.0f);
-		camera.SetProjectionValues(90.0f, static_cast<float>(WindowWidth) / static_cast<float>(WindowHeight), 0.1f, 1000.0f);
+		camera.SetProjectionValues(90.0f, static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 1000.0f);
 	}
 	catch (COMException& exception)
 	{

@@ -1,14 +1,14 @@
 #include "Mesh.h"
 
-Mesh::Mesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, std::vector<Vertex>& vertices, std::vector<DWORD>& indices, std::vector<Texture> textures)
+Mesh::Mesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, std::vector<Vertex>& vertices, std::vector<DWORD>& indices, std::vector<Texture>& textures)
 {
 	this->deviceContext = deviceContext;
 	this->textures = textures;
 
-	HRESULT hr = this->vertexBuffer.Initialize(device, vertices.data(), (UINT)indices.size());
+	HRESULT hr = this->vertexbuffer.Initialize(device, vertices.data(), (UINT)vertices.size());
 	COM_ERROR_IF_FAILED(hr, L"頂點緩衝區網格初始化失敗\nFailed to initialize vertex buffer for mesh.");
 
-	hr = this->indexBuffer.Initialize(device, indices.data(), (UINT)indices.size());
+	hr = this->indexbuffer.Initialize(device, indices.data(), (UINT)indices.size());
 	COM_ERROR_IF_FAILED(hr, L"索引緩衝區網格初始化失敗\nFailed to initialize index buffer for mesh.");
 
 }
@@ -16,8 +16,8 @@ Mesh::Mesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, std::vector
 Mesh::Mesh(const Mesh& mesh)
 {
 	this->deviceContext = mesh.deviceContext;
-	this->indexBuffer = mesh.indexBuffer;
-	this->vertexBuffer = mesh.vertexBuffer;
+	this->indexbuffer = mesh.indexbuffer;
+	this->vertexbuffer = mesh.vertexbuffer;
 	this->textures = mesh.textures;
 }
 
@@ -34,7 +34,7 @@ void Mesh::Draw()
 		}
 	}
 
-	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexBuffer.GetAddressOf(), this->vertexBuffer.StridePtr(), &offset);
-	this->deviceContext->IASetIndexBuffer(this->indexBuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
-	this->deviceContext->DrawIndexed(this->indexBuffer.IndexCount(), 0, 0);
+	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexbuffer.GetAddressOf(), this->vertexbuffer.StridePtr(), &offset);
+	this->deviceContext->IASetIndexBuffer(this->indexbuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
+	this->deviceContext->DrawIndexed(this->indexbuffer.IndexCount(), 0, 0);
 }
