@@ -1,6 +1,6 @@
 #pragma once
 #include <comdef.h>
-#include "StringConverter.h"
+#include "StringHelper.h"
 
 #define COM_ERROR_IF_FAILED( hr, msg ) if( FAILED( hr ) ) throw COMException( hr, msg, __FILE__, __FUNCTION__, __LINE__ )
 
@@ -12,8 +12,8 @@ public:
 		_com_error error(hr);
 		whatmsg = L"Msg: " + msg + L"\n";
 		whatmsg += error.ErrorMessage();
-		whatmsg += L"\nFile: " + StringConverter::StringToWide(file);
-		whatmsg += L"\nFunction: " + StringConverter::StringToWide(function);
+		whatmsg += L"\nFile: " + StringHelper::StringToWide(file);
+		whatmsg += L"\nFunction: " + StringHelper::StringToWide(function);
 		whatmsg += L"\nLine: " + std::to_wstring(line);
 	}
 
