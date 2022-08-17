@@ -23,7 +23,7 @@ void Engine::update()
 	float dt = (float)timer.GetMilisecondsElapsed();
 	timer.Restart();
 
-	const float cameraSpeed = 0.004f;
+	static float cameraSpeed = 0.004f;
 	
 	while (!Keyboard.CharBufferIsEmpty())
 	{
@@ -56,7 +56,18 @@ void Engine::update()
 		}
 	}
 
-	this->gfx.gameObject.AdjustRotation(0.0f, 0.001f * dt, 0.0f);
+	this->gfx.gameObject.AdjustRotation(0.0f, 0.001f * dt / 10.0f, 0.0f);
+
+ 	if (Keyboard.KeyIsPressed(VK_OEM_PLUS))
+	{
+		cameraSpeed += 0.1f;
+	}
+
+	if (Keyboard.KeyIsPressed(VK_OEM_MINUS))
+	{
+		if (cameraSpeed - 0.1f > 0)
+			cameraSpeed -= 0.1f;
+	}
 
 	if (Keyboard.KeyIsPressed('W'))
 	{

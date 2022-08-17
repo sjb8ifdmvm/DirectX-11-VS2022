@@ -283,11 +283,11 @@ bool Graphics::InitializeScene()
 		COM_ERROR_IF_FAILED(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
 
 		//初始化模組(s)
-		if (!gameObject.Initialize("Data\\Objects\\Samples\\person_embeddedindexed.blend", this->device.Get(), this->deviceContext.Get(), cb_vs_vertexshader))
+		if (!gameObject.Initialize("Data\\Objects\\Samples\\dodge_challenger.fbx", this->device.Get(), this->deviceContext.Get(), cb_vs_vertexshader))
 			return false;
 
 		camera.SetPosition(0.0f, 0.0f, -2.0f);
-		camera.SetProjectionValues(90.0f, static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 1000.0f);
+		camera.SetProjectionValues(90.0f, static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 3000.0f);
 	}
 	catch (COMException& exception)
 	{
