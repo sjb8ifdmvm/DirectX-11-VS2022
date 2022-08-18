@@ -6,7 +6,7 @@
 #include <WICTextureLoader.h>
 #include "Camera.h"
 #include "..\\Timer.h"
-#include "GameObject.h"
+#include "RenderableGameObject.h"
 
 //------- ImGui
 #include "ImGui\\imgui.h"
@@ -20,7 +20,7 @@ public:
 	bool Initialize(HWND hWnd, int width, int height);
 	void RenderFrame();
 	Camera camera;
-	GameObject gameObject;
+	RenderableGameObject gameObject;
 
 private:
 	bool InitializeDirectX(HWND hWnd);
