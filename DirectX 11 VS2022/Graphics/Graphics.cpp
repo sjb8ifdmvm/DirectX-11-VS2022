@@ -28,6 +28,9 @@ bool Graphics::Initialize(HWND hWnd, int width, int height)
 
 void Graphics::RenderFrame()
 {
+	this->cb_ps_light.ApplyChanges();
+	this->deviceContext->PSSetConstantBuffers(0, 1, this->cb_ps_light.GetAddressOf());
+
 	float bgcolor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	this->deviceContext->ClearRenderTargetView(this->renderTargetView.Get(), bgcolor);
 	this->deviceContext->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -41,8 +44,6 @@ void Graphics::RenderFrame()
 	this->deviceContext->VSSetShader(this->vertexshader.GetShader(), NULL, 0);
 	this->deviceContext->PSSetShader(this->pixelshader.GetShader(), NULL, 0);
 
-	UINT offset = 0;//偏移值
-	
 	{
 		this->gameObject.Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix());
 	}
@@ -72,6 +73,8 @@ void Graphics::RenderFrame()
 	ImGui::Begin("ImGui Window");
 	//ImGui::DragFloat3("Translation X/Y/Z", translationOffset, 0.01f, -5.0f, 5.0f);
 	//ImGui::DragFloat("Alpha", &alpha, 0.02f, 0.0f, 1.0f);
+	ImGui::DragFloat3("Ambient Light Color", &this->cb_ps_light.data.ambientLightColor.x, 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat("Ambient Light Strength", &this->cb_ps_light.data.ambientLightStrength, 0.01f, 0.0f, 1.0f);
 	ImGui::End();
 	//Assemble Together Draw Data
 	ImGui::Render();
@@ -279,8 +282,11 @@ bool Graphics::InitializeScene()
 		hr = this->cb_vs_vertexshader.Initialize(this->device.Get(), this->deviceContext.Get());
 		COM_ERROR_IF_FAILED(hr, L"頂點著色器緩衝區初始化失敗\nFailed to initialize vertexshader buffer.");
 
-		hr = this->cb_ps_pixelshader.Initialize(this->device.Get(), this->deviceContext.Get());
+		hr = this->cb_ps_light.Initialize(this->device.Get(), this->deviceContext.Get());
 		COM_ERROR_IF_FAILED(hr, L"像素著色器緩衝區初始化失敗\nFailed to initialize pixelshader buffer.");
+
+		this->cb_ps_light.data.ambientLightColor = XMFLOAT3(1.0f, 1.0f, 1.0f);
+		this->cb_ps_light.data.ambientLightStrength = 1.0f;
 
 		//初始化模組(s)
 		if (!gameObject.Initialize("Data\\Objects\\Samples\\dodge_challenger.fbx", this->device.Get(), this->deviceContext.Get(), cb_vs_vertexshader))

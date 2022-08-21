@@ -56,7 +56,7 @@ void Engine::update()
 		}
 	}
 
-	this->gfx.gameObject.AdjustRotation(0.0f, 0.001f * dt / 10.0f, 0.0f);
+	//this->gfx.gameObject.AdjustRotation(0.0f, 0.001f * dt / 10.0f, 0.0f);
 
  	if (Keyboard.KeyIsPressed(VK_OEM_PLUS))
 	{
