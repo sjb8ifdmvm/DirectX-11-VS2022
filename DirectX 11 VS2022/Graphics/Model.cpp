@@ -27,8 +27,9 @@ void Model::Draw(const XMMATRIX& worldMatrix ,const XMMATRIX& viewProjectionMatr
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		//Update Constant buffer with WVP Matrix
-		this->cb_vs_vertexshader->data.mat = meshes[i].GetTransformMatrix() * worldMatrix * viewProjectionMatrix;//Caculate world Matrix
-		this->cb_vs_vertexshader->data.mat = XMMatrixTranspose(this->cb_vs_vertexshader->data.mat);
+		this->cb_vs_vertexshader->data.wvpMatrix = meshes[i].GetTransformMatrix() * worldMatrix * viewProjectionMatrix;//Caculate world Matrix
+		this->cb_vs_vertexshader->data.worldMatrix = meshes[i].GetTransformMatrix() * worldMatrix;//Caculate world Matrix
+		
 		this->cb_vs_vertexshader->ApplyChanges();
 		meshes[i].Draw();
 	}
@@ -80,6 +81,10 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const XMMATRIX& Tran
 		vertex.pos.y = mesh->mVertices[i].y;
 		vertex.pos.z = mesh->mVertices[i].z;
 		
+		vertex.normal.x = mesh->mNormals[i].x;
+		vertex.normal.y = mesh->mNormals[i].y;
+		vertex.normal.z = mesh->mNormals[i].z;
+
 		//從第一個紋理開始索引
 		if (mesh->mTextureCoords[0])
 		{
